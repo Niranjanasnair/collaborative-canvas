@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collaborative Canvas - Real-time Drawing</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="logo">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <path d="M8 24L24 8M8 24L12 20L20 12L24 8M8 24L4 28L8 28L8 24Z" 
+              stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <h1>Collaborative Canvas</h1>
+    </div>
+    
+    <div class="user-list">
+      <div class="user-count">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="9" cy="7" r="4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M23 21v-2a4 4 0 00-3-3.87" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M16 3.13a4 4 0 010 7.75" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span id="user-count">0 online</span>
+      </div>
+      
+      <div class="user-avatars" id="user-avatars"></div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="app-content">
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <!-- Tools Section -->
+      <div class="toolbar-section">
+        <h3 class="toolbar-title">Tools</h3>
+        <div class="tool-group">
+          <button id="brush-btn" class="tool-button active">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M12 19l7-7 3 3-7 7-3-3z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Brush</span>
+          </button>
+
+          <button id="eraser-btn" class="tool-button">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M20 20H7L3 16L11 8L17 14L20 17V20Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Eraser</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Color Section -->
+      <div class="toolbar-section">
+        <h3 class="toolbar-title">Color</h3>
+        <div class="color-picker">
+          <div class="color-presets" id="color-presets"></div>
+          <div class="custom-color">
+            <input type="color" id="color-input" value="#2563eb" class="color-input">
+            <span id="color-hex" class="color-hex">#2563EB</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Brush Size Section -->
+      <div class="toolbar-section">
+        <h3 class="toolbar-title">Brush Size</h3>
+        <input type="range" id="brush-size" min="1" max="50" value="3" class="size-slider">
+        <div class="size-preview">
+          <div id="size-indicator" class="size-indicator"></div>
+          <span id="size-value" class="size-value">3px</span>
+        </div>
+      </div>
+
+      <!-- Actions Section -->
+      <div class="toolbar-section">
+        <h3 class="toolbar-title">Actions</h3>
+        <div class="tool-group">
+          <button id="undo-btn" class="tool-button" disabled>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M3 7v6h6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Undo</span>
+          </button>
+
+          <button id="redo-btn" class="tool-button" disabled>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M21 7v6h-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M3 17a9 9 0 019-9 9 9 0 016 2.3l3 2.7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Redo</span>
+          </button>
+
+          <button id="clear-btn" class="tool-button danger">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <polyline points="3 6 5 6 21 6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Clear</span>
+          </button>
+
+          <button id="download-btn" class="tool-button success">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="7 10 12 15 17 10" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="12" y1="15" x2="12" y2="3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Save</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Connection Status -->
+      <div class="connection-status" id="connection-status">
+        <span class="status-dot"></span>
+        <span id="status-text">Connecting...</span>
+      </div>
+    </div>
+
+    <!-- Canvas Container -->
+    <div class="canvas-container">
+      <canvas id="canvas" class="drawing-canvas"></canvas>
+      <div id="remote-cursors" class="remote-cursors"></div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="canvas.js"></script>
+  <script src="websocket.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
