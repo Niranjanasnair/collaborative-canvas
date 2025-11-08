@@ -3,6 +3,10 @@
 A real-time collaborative drawing platform built entirely with Vanilla JavaScript and Node.js (WebSockets), designed to bring creativity and teamwork together on a shared digital canvas.
 Multiple users can sketch, erase, and experiment simultaneously every stroke appears instantly across all connected screens, creating a seamless, interactive, and synchronized drawing experience.
 
+## Live Demo
+You can try the project online here: [Collaborative Canvas Demo](https://collaborative-canvas-c6ht.onrender.com)
+
+
 ## Features
 
 - Real-time drawing with instant stroke updates
