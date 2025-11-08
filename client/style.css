@@ -9,12 +9,12 @@ body {
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0fd361 0%, #0d857f 100%);
   min-height: 100vh;
   overflow: hidden;
 }
 
-/* Header Styles */
+
 .app-header {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
@@ -39,7 +39,7 @@ body {
   letter-spacing: -0.5px;
 }
 
-/* User List */
+
 .user-list {
   display: flex;
   align-items: center;
@@ -89,7 +89,7 @@ body {
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
 }
 
-/* Main Content */
+
 .app-content {
   display: flex;
   padding: 2rem;
@@ -98,7 +98,7 @@ body {
   overflow: hidden;
 }
 
-/* Toolbar */
+
 .toolbar {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
@@ -157,7 +157,7 @@ body {
 
 .tool-button.active {
   border-color: #667eea;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1a9076 0%, #0bba4b 100%);
   color: white;
 }
 
@@ -179,7 +179,7 @@ body {
   color: #10b981;
 }
 
-/* Color Picker */
+
 .color-picker {
   display: flex;
   flex-direction: column;
@@ -291,7 +291,7 @@ body {
   color: #6b7280;
 }
 
-/* Connection Status */
+
 .connection-status {
   display: flex;
   align-items: center;
@@ -335,7 +335,7 @@ body {
   font-weight: 500;
 }
 
-/* Canvas Container */
+
 .canvas-container {
   flex: 1;
   position: relative;
@@ -353,7 +353,7 @@ body {
   touch-action: none;
 }
 
-/* Remote Cursors */
+
 .remote-cursors {
   position: absolute;
   top: 0;
@@ -388,7 +388,7 @@ body {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-/* Responsive */
+
 @media (max-width: 768px) {
   .app-content {
     flex-direction: column;
@@ -413,4 +413,8 @@ body {
     height: 30px;
     font-size: 0.65rem;
   }
+  
+  
+  
+
 }

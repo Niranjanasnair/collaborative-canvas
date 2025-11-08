@@ -1,7 +1,4 @@
-/**
- * Main WebSocket Server
- * Handles client connections, drawing events, and real-time synchronization
- */
+
 
 const express = require('express');
 const http = require('http');
@@ -64,24 +61,27 @@ io.on('connection', (socket) => {
    */
   socket.on('DRAW_ACTION', (data) => {
     try {
-      // Validate drawing data
       if (!data || !data.path || !Array.isArray(data.path)) {
         console.error('Invalid drawing data received');
         return;
       }
 
-      // Add action to drawing history
       const action = {
         ...data,
         userId: socket.id,
         timestamp: Date.now()
       };
-      
-      drawingState.addAction(roomId, action);
 
-      // Broadcast to all other users in room
-      socket.to(roomId).emit('DRAW_ACTION', action);
-      
+      // ✅ FIX: Separate handling for live (partial) vs finalized strokes
+      if (data.finalized) {
+        // Store completed stroke for undo/redo
+        drawingState.addAction(roomId, action);
+        io.to(roomId).emit('DRAW_ACTION', action);
+      } else {
+        
+        socket.to(roomId).emit('DRAW_ACTION', action);
+      }
+
     } catch (error) {
       console.error('Error handling DRAW_ACTION:', error);
     }
@@ -89,7 +89,6 @@ io.on('connection', (socket) => {
 
   /**
    * Handle cursor movement
-   * Broadcasts cursor position to other users for real-time indicators
    */
   socket.on('CURSOR_MOVE', (data) => {
     try {
@@ -106,14 +105,11 @@ io.on('connection', (socket) => {
 
   /**
    * Handle global undo operation
-   * Removes last action from history and broadcasts to all users
    */
   socket.on('UNDO', () => {
     try {
       const success = drawingState.undo(roomId);
-      
       if (success) {
-        // Broadcast undo to all users including sender
         io.to(roomId).emit('UNDO_ACTION', {
           history: drawingState.getHistory(roomId)
         });
@@ -125,57 +121,57 @@ io.on('connection', (socket) => {
 
   /**
    * Handle global redo operation
-   * Restores previously undone action and broadcasts to all users
    */
   socket.on('REDO', () => {
-    try {
-      const success = drawingState.redo(roomId);
-      
-      if (success) {
-        // Broadcast redo to all users including sender
-        io.to(roomId).emit('REDO_ACTION', {
-          history: drawingState.getHistory(roomId)
-        });
-      }
-    } catch (error) {
-      console.error('Error handling REDO:', error);
-    }
-  });
+  try {
+    const room = roomId;
+    const roomData = drawingState.rooms.get(room);
 
-  /**
-   * Handle clear canvas request
-   * Clears all drawing history and broadcasts to all users
-   */
+    if (!roomData || roomData.undoneActions.length === 0) {
+      return;
+    }
+
+    // Get the last undone action (without removing yet)
+    const actionToRedo = roomData.undoneActions[roomData.undoneActions.length - 1];
+
+    // Perform redo in the drawing state
+    const success = drawingState.redo(room);
+
+    if (success) {
+      
+      io.to(room).emit('DRAW_ACTION', actionToRedo);
+
+      // Also update redo/undo states across clients
+      io.to(room).emit('REDO_ACTION', {
+        history: drawingState.getHistory(room)
+      });
+    }
+  } catch (error) {
+    console.error('Error handling REDO:', error);
+  }
+});
+
+
+  
   socket.on('CLEAR_CANVAS', () => {
     try {
       drawingState.clear(roomId);
-      
-      // Broadcast clear to all users including sender
       io.to(roomId).emit('CANVAS_CLEARED');
     } catch (error) {
       console.error('Error handling CLEAR_CANVAS:', error);
     }
   });
 
-  /**
-   * Handle user disconnect
-   * Removes user from room and broadcasts to remaining users
-   */
+  
   socket.on('disconnect', () => {
     console.log(`User disconnected: ${socket.id}`);
-    
     roomManager.removeUser(roomId, socket.id);
-    
-    // Notify other users
     socket.to(roomId).emit('USER_LEFT', {
       userId: socket.id,
       users: roomManager.getUsers(roomId)
     });
   });
 
-  /**
-   * Error handler for socket errors
-   */
   socket.on('error', (error) => {
     console.error('Socket error:', error);
   });
@@ -198,7 +194,6 @@ server.listen(PORT, () => {
   `);
 });
 
-// Graceful shutdown
 process.on('SIGTERM', () => {
   console.log('SIGTERM signal received: closing HTTP server');
   server.close(() => {

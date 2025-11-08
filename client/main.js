@@ -54,45 +54,43 @@
   function setupUIListeners() {
     const canvas = CanvasModule.getCanvas();
     
-    // Canvas drawing events
+    
     canvas.addEventListener('mousedown', handleMouseDown);
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseup', handleMouseUp);
     canvas.addEventListener('mouseleave', handleMouseUp);
     
-    // Touch events for mobile
+    
     canvas.addEventListener('touchstart', handleMouseDown);
     canvas.addEventListener('touchmove', handleMouseMove);
     canvas.addEventListener('touchend', handleMouseUp);
     
-    // Tool buttons
+    
     document.getElementById('brush-btn').addEventListener('click', () => selectTool('brush'));
     document.getElementById('eraser-btn').addEventListener('click', () => selectTool('eraser'));
     
-    // Color input
+    
     document.getElementById('color-input').addEventListener('input', (e) => {
       CanvasModule.setColor(e.target.value);
       updateColorHex(e.target.value);
       updateSizeIndicator();
     });
     
-    // Brush size slider
+    
     document.getElementById('brush-size').addEventListener('input', (e) => {
       CanvasModule.setBrushSize(parseInt(e.target.value));
       updateSizeValue(e.target.value);
       updateSizeIndicator();
     });
     
-    // Action buttons
+    
     document.getElementById('undo-btn').addEventListener('click', handleUndo);
     document.getElementById('redo-btn').addEventListener('click', handleRedo);
     document.getElementById('clear-btn').addEventListener('click', handleClear);
     document.getElementById('download-btn').addEventListener('click', handleDownload);
   }
 
-  /**
-   * Setup WebSocket event callbacks
-   */
+  
   function setupWebSocketCallbacks() {
     // Initial canvas state
     WebSocketModule.setOnInitCanvas((data) => {
@@ -103,67 +101,65 @@
       updateUndoRedoButtons();
     });
     
-    // Draw action from remote user
+    
     WebSocketModule.setOnDrawAction((action) => {
       state.history.push(action);
       CanvasModule.drawPath(action.path, action.color, action.size, action.tool === 'eraser');
       updateUndoRedoButtons();
     });
     
-    // User joined
+    
     WebSocketModule.setOnUserJoined((data) => {
       updateUsers(data.users);
       showNotification(`User joined`);
     });
     
-    // User left
+    
     WebSocketModule.setOnUserLeft((data) => {
       updateUsers(data.users);
       updateRemoteCursors();
     });
     
-    // Cursor update
+    
     WebSocketModule.setOnCursorUpdate((cursors) => {
       updateRemoteCursors();
     });
     
-    // Undo action
+    
     WebSocketModule.setOnUndoAction((history) => {
       state.history = history;
+      state.canRedo = true;
       CanvasModule.redrawFromHistory(history);
       updateUndoRedoButtons();
     });
     
-    // Redo action
+    
     WebSocketModule.setOnRedoAction((history) => {
       state.history = history;
+      state.canRedo = false;
       CanvasModule.redrawFromHistory(history);
       updateUndoRedoButtons();
     });
     
-    // Canvas cleared
+    
     WebSocketModule.setOnCanvasCleared(() => {
       state.history = [];
       CanvasModule.clearCanvas();
       updateUndoRedoButtons();
     });
     
-    // Connection status
+    
     WebSocketModule.setOnConnectionChange((connected) => {
       updateConnectionStatus(connected);
     });
   }
 
-  /**
-   * Handle mouse down event
-   */
+  
   function handleMouseDown(e) {
     CanvasModule.startDrawing(e);
   }
 
-  /**
-   * Handle mouse move event
-   */
+  
   function handleMouseMove(e) {
     const cursorPos = CanvasModule.draw(e);
     
@@ -172,9 +168,7 @@
     }
   }
 
-  /**
-   * Handle mouse up event
-   */
+  
   function handleMouseUp(e) {
     const action = CanvasModule.stopDrawing();
     
@@ -185,13 +179,11 @@
     }
   }
 
-  /**
-   * Select drawing tool
-   */
+  
   function selectTool(tool) {
     CanvasModule.setTool(tool);
     
-    // Update UI
+    
     document.querySelectorAll('.tool-button').forEach(btn => {
       btn.classList.remove('active');
     });
@@ -205,42 +197,32 @@
     updateSizeIndicator();
   }
 
-  /**
-   * Handle undo action
-   */
+  
   function handleUndo() {
     if (state.history.length > 0) {
       WebSocketModule.sendUndo();
     }
   }
 
-  /**
-   * Handle redo action
-   */
+  
   function handleRedo() {
     WebSocketModule.sendRedo();
   }
 
-  /**
-   * Handle clear canvas
-   */
+  
   function handleClear() {
     if (confirm('Are you sure you want to clear the canvas? This will affect all users.')) {
       WebSocketModule.sendClearCanvas();
     }
   }
 
-  /**
-   * Handle download canvas
-   */
+  
   function handleDownload() {
     CanvasModule.downloadCanvas();
     showNotification('Canvas downloaded!');
   }
 
-  /**
-   * Initialize color picker with preset colors
-   */
+  
   function initializeColorPicker() {
     const presetsContainer = document.getElementById('color-presets');
     
@@ -252,20 +234,18 @@
       presetsContainer.appendChild(swatch);
     });
     
-    // Set first color as active
+    
     selectColor(PRESET_COLORS[0]);
   }
 
-  /**
-   * Select a color
-   */
+  
   function selectColor(color) {
     CanvasModule.setColor(color);
     document.getElementById('color-input').value = color;
     updateColorHex(color);
     updateSizeIndicator();
     
-    // Update active swatch
+    
     document.querySelectorAll('.color-swatch').forEach(swatch => {
       swatch.classList.remove('active');
       if (swatch.style.backgroundColor === hexToRgb(color)) {
@@ -319,13 +299,21 @@
    * Update undo/redo button states
    */
   function updateUndoRedoButtons() {
-    const undoBtn = document.getElementById('undo-btn');
-    const redoBtn = document.getElementById('redo-btn');
-    
-    undoBtn.disabled = state.history.length === 0;
-    // Redo is managed by server, keep it disabled for simplicity
+  const undoBtn = document.getElementById('undo-btn');
+  const redoBtn = document.getElementById('redo-btn');
+
+  // Enable undo if there's at least one action
+  undoBtn.disabled = state.history.length === 0;
+
+  // Ask the server (through WebSocketModule) if redo is available
+  // or maintain your own flag (simpler fix below)
+  if (state.canRedo) {
+    redoBtn.disabled = false;
+  } else {
     redoBtn.disabled = true;
   }
+}
+
 
   /**
    * Update user list display
@@ -336,10 +324,10 @@
     
     countElement.textContent = `${users.length} online`;
     
-    // Clear existing avatars
+    
     avatarsContainer.innerHTML = '';
     
-    // Add avatar for each user
+    
     users.forEach(user => {
       const avatar = document.createElement('div');
       avatar.className = 'user-avatar';
