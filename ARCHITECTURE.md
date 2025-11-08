@@ -19,7 +19,10 @@ Collaborative Canvas is a real-time multi-user drawing platform built using Vani
 - **In-memory storage** for drawing state
 
 ## Data Flow Diagram
-![System Architecture](./architecture-diagram.png)
+
+![Architecture Diagram](architecture-diagram.jpg)
+
+
 
 The data flow diagram above represents the real-time communication and synchronization process in the Collaborative Canvas application. When a user begins drawing on the canvas, the Canvas.js module captures the drawing inputs such as cursor movement, brush color, and size. These inputs are passed to Main.js, which coordinates between the user interface and the communication layer. The WebSocket.js module then sends these drawing actions through a WebSocket connection to the server. On the backend, Server.js receives and validates these actions before storing them in DrawingState.js, which maintains the global drawing history. The RoomManager handles user sessions and manages connected clients. Once the server processes the data, it broadcasts the drawing updates back to all active users. Other clients, such as User B, receive these updates through their WebSocket.js, which passes them to Main.js and then to Canvas.js for rendering. This continuous bidirectional flow ensures that every user sees live updates on their screen, enabling smooth and synchronized real-time collaboration.
 
