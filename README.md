@@ -140,6 +140,7 @@ COLLABORATIVE-CANVAS/
 ├── package.json
 └── package-lock.json
 
+
 ### Data Flow
 
 1. When a user starts drawing, the client continuously tracks the cursor movement and records path coordinates.
