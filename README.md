@@ -123,7 +123,7 @@ npm start
 
 ### Folder Structure
 
-<pre> ```text COLLABORATIVE-CANVAS/ ├── client/ │ ├── canvas.js │ ├── index.html │ ├── main.js │ ├── style.css │ └── websocket.js ├── node_modules/ ├── server/ │ ├── drawing-state.js │ ├── rooms.js │ └── server.js ├── ARCHITECTURE.md ├── README.md ├── package.json └── package-lock.json ``` </pre>
+```text COLLABORATIVE-CANVAS/ ├── client/ │ ├── canvas.js │ ├── index.html │ ├── main.js │ ├── style.css │ └── websocket.js ├── node_modules/ ├── server/ │ ├── drawing-state.js │ ├── rooms.js │ └── server.js ├── ARCHITECTURE.md ├── README.md ├── package.json └── package-lock.json ```
 
 
 ### Data Flow
