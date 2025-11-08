@@ -1,7 +1,4 @@
-/**
- * Room Management
- * Handles multiple drawing rooms and user management
- */
+
 
 class RoomManager {
   constructor() {

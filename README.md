@@ -1,8 +1,17 @@
-# Real-Time Collaborative Drawing Canvas
+# Collaborative Canvas
 
-A fully-featured collaborative drawing application built with **Vanilla JavaScript** and **Node.js + WebSockets**. Multiple users can draw simultaneously on the same canvas with real-time synchronization.
+A real-time collaborative drawing platform built entirely with Vanilla JavaScript and Node.js (WebSockets), designed to bring creativity and teamwork together on a shared digital canvas.
+Multiple users can sketch, erase, and experiment simultaneously every stroke appears instantly across all connected screens, creating a seamless, interactive, and synchronized drawing experience.
 
 ## Features
+
+- Real-time drawing with instant stroke updates
+- Brush and eraser tools with adjustable size
+- Color picker with preset and custom color options
+- Undo and Redo functionality
+- Clear and Save options for the canvas
+- User name display near each cursor
+- Responsive and minimal interface
 
 ### Core Functionality
 - **Real-time Drawing**: See other users' strokes as they draw them
@@ -16,6 +25,7 @@ A fully-featured collaborative drawing application built with **Vanilla JavaScri
 - **Download**: Save canvas as PNG image
 
 ### Technical Highlights
+
 - Pure Vanilla JavaScript (no frameworks)
 - WebSocket-based real-time communication
 - Efficient canvas rendering with path optimization
@@ -23,7 +33,7 @@ A fully-featured collaborative drawing application built with **Vanilla JavaScri
 - Responsive design with modern UI
 - Error handling and reconnection logic
 
-## Getting Started
+## How to Run
 
 ### Prerequisites
 
@@ -34,6 +44,9 @@ A fully-featured collaborative drawing application built with **Vanilla JavaScri
 ### Installation
 
 1. **Clone or download the repository**
+```bash
+   git clone <repo-url>
+  
 
 2. **Navigate to project directory**
 ```bash
@@ -50,13 +63,14 @@ npm install
 npm start
 ```
 
-5. **Open your browser**
+5. **Open the app in your browser**
 
 (http://localhost:3001)
 
 The server will start and automatically serve the client files.
 
 ## Testing with Multiple Users
+To test realtime drawing, open the same link in another tab or device.
 
 ### Local Testing
 
@@ -71,10 +85,12 @@ npm start
    - Tab 3: `http://localhost:3001` (incognito/private window)
 
 3. **Test collaborative features**
-   - Draw in one tab → see strokes appear in other tabs
-   - Try different colors → each user has unique color indicator
-   - Test undo/redo → affects all users globally
-   - Clear canvas → clears for everyone
+
+   - Draw in one tab → see strokes appear live in others
+   - Try different colors and brush sizes
+   - Each user has unique color indicator
+   - Test undo/redo and see that affects all users globally
+   - Clear canvas and see everyone’s canvas simultaneously
 
 ### Network Testing
 
@@ -93,77 +109,74 @@ npm start
 
 ## How It Works
 
-### Architecture
+- Each drawing action (start, move, end) is captured on the client.
 
-Client (Browser)
-↓
-Canvas.js (Drawing logic)
-↓
-WebSocket.js (Communication)
-↓
-Socket.io Connection
-↓
-Server (Node.js)
-↓
-Drawing State Manager
-↓
-Broadcast to all clients
+- The path data is sent via WebSocket to the server.
+
+- The server broadcasts it to all connected clients.
+
+- Clients render it live on their own canvases.
+
+- Undo/Redo operations are synced through server-managed history.
+
+- This ensures everyone always sees the same canvas state in real-time.
+
+### Folder Structure
+
+COLLABORATIVE-CANVAS/
+├── client/
+│   ├── canvas.js
+│   ├── index.html
+│   ├── main.js
+│   ├── style.css
+│   └── websocket.js
+├── node_modules/
+├── server/
+│   ├── drawing-state.js
+│   ├── rooms.js
+│   └── server.js
+├── ARCHITECTURE.md
+├── README.md
+├── package.json
+└── package-lock.json
 
 ### Data Flow
 
-1. User draws on canvas
-2. Client captures path points
-3. On mouse up, sends action via WebSocket
-4. Server validates and broadcasts to all clients
-5. Other clients receive and render the action
-6. Server maintains history for new connections
+1. When a user starts drawing, the client continuously tracks the cursor movement and records path coordinates.
+
+2. These drawing coordinates are sent in real time to the server through WebSocket events.
+
+3. The server receives each stroke, validates it, and instantly broadcasts the drawing data to all connected users.
+
+4. Every client updates its canvas simultaneously, ensuring a live collaborative experience.
+
+5. The server also stores each drawing action in a shared history, so new users joining later can view the current canvas state.
+
 
 ### Undo/Redo Strategy
 
-- **Global Operations**: Undo/redo affects last action by ANY user
-- **Server-Side History**: Single source of truth maintained by server
-- **Broadcast Changes**: All clients redraw from updated history
-- **Simple & Predictable**: No per-user undo stacks
+**Global Control**: Undo or redo applies to the most recent action performed by any user, maintaining a consistent shared state.
 
-## Configuration
+**Centralized History**: All drawing actions are recorded on the server, acting as the single source of truth.
 
-### Server Port
+**Real-Time Updates**: When an undo or redo occurs, the server re-broadcasts the updated canvas history to every connected client.
 
-Edit `server/server.js`:
-```javascript
-const PORT = process.env.PORT || 3001;
-```
+**Consistency Over Complexity**: A unified undo/redo stack is used instead of separate per-user histories to keep synchronization smooth and predictable.
 
-### Client Connection
 
-Edit `client/main.js`:
-```javascript
-WebSocketModule.init('http://localhost:3001');
-```
+## Known limitations/bugs
 
-For production, use your server domain:
-```javascript
-WebSocketModule.init('https://your-domain.com');
-```
+- Currently supports a single shared canvas (no multi-room feature yet)
 
-### History Limit
+- Canvas data resets when the server restarts — persistence not implemented
 
-Edit `server/drawing-state.js`:
-```javascript
-this.MAX_HISTORY_SIZE = 1000; // Maximum actions stored
-```
+- Undo/Redo functions globally, not per user
 
-## Known Limitations
+- No dedicated authentication or user login system
 
-### Current Version
+- Minor latency may occur when many users draw simultaneously
 
-1. **Single Room**: All users join the same canvas (no room system yet)
-2. **No Persistence**: Canvas clears when server restarts
-3. **No Authentication**: Anyone can join and draw
-4. **Basic Undo/Redo**: No per-user undo stacks
-5. **Memory Limits**: History limited to 1000 actions
-6. **No Shapes**: Only freehand drawing (no rectangles, circles, etc.)
-7. **No Layers**: Single drawing layer only
+- Shape drawing tools (like rectangle or circle) not yet added
 
 ### Browser Compatibility
 
@@ -179,131 +192,38 @@ this.MAX_HISTORY_SIZE = 1000; // Maximum actions stored
 - May lag with 20+ simultaneous drawers
 - Large canvases (>2000px) may impact mobile performance
 
-## 🔧 Troubleshooting
 
-### Server won't start
+### Time Spent on the Project
 
-**Error**: `EADDRINUSE: address already in use`
+-- Total Duration: 3 days
 
-**Solution**: Port 3001 is in use
-```bash
-# Windows
-netstat -ano | findstr :3001
-taskkill /PID <PID> /F
+- Day 1: Project setup, WebSocket configuration, and core drawing functionality
 
-# Mac/Linux
-lsof -ti:3001 | xargs kill -9
-```
+- Day 2: Added real-time synchronization, undo/redo, and UI improvements
 
-### Can't connect from other devices
-
-**Issue**: Firewall blocking connections
-
-**Solution**: 
-1. Allow Node.js through firewall
-2. Check if port 3001 is open
-3. Verify devices are on same network
-
-### Drawing appears offset
-
-**Issue**: Canvas scaling issue
-
-**Solution**: Hard refresh browser (Ctrl+F5)
-
-### Undo button not working
-
-**Issue**: No actions in history
-
-**Solution**: Draw something first, then try undo
-
-## Time Spent
-
-### Development Breakdown
-
-- **Project Setup & Structure**: 2 hours
-- **Canvas Implementation**: 4 hours
-  - Drawing logic and path handling
-  - Touch event support
-  - Eraser implementation
-- **WebSocket Integration**: 5 hours
-  - Server setup with Socket.io
-  - Real-time event handling
-  - Reconnection logic
-- **UI/UX Design**: 3 hours
-  - Modern gradient design
-  - Responsive layout
-  - Interactive elements
-- **State Management**: 3 hours
-  - Drawing history
-  - Global undo/redo
-  - Room management
-- **Testing & Debugging**: 4 hours
-  - Multi-user testing
-  - Performance optimization
-  - Bug fixes
-- **Documentation**: 3 hours
-  - Code comments
-  - README and ARCHITECTURE
-  - Setup instructions
-
-**Total Development Time**: ~24 hours
+- Day 3: Enhanced user indicators, brush/eraser logic, color picker, and testing
 
 ### Learning Outcomes
 
-- Deep understanding of WebSocket communication
-- Canvas API optimization techniques
-- Real-time state synchronization strategies
-- Vanilla JavaScript DOM manipulation mastery
-- Event-driven architecture patterns
+- Strengthened understanding of WebSocket communication.
+
+- Improved proficiency with Canvas API and event-driven programming.
+
+- Gained experience in designing collaborative, real-time systems.
+
+- Enhanced front-end aesthetics with usability-focused layout decisions.
 
 ## Future Enhancements
-
-### Planned Features
-
-- Multiple rooms/sessions
-- User authentication
-- Database persistence (MongoDB/PostgreSQL)
+- Introduce per-user undo history.
 - Shape tools (rectangle, circle, line)
 - Text tool
-- Layer system
 - Color fill/bucket tool
 - Image upload
-- Canvas export (PDF, SVG)
 - Chat functionality
-- Canvas history playback
-- Admin controls (kick users, lock canvas)
-- Responsive toolbar for mobile
-- Keyboard shortcuts
-- Grid and snap-to-grid
+- Enable persistent storage (MongoDB).
 
-### Performance Improvements
 
-- Canvas offscreen rendering
-- Path simplification algorithm
-- Delta compression for network traffic
-- WebRTC for peer-to-peer drawing
-- Service worker for offline support
-- Progressive canvas loading
 
-## License
+## Author
 
-MIT License - feel free to use for learning and personal projects.
-
-## Acknowledgments
-
-- Built with using Vanilla JavaScript
-- Socket.io for WebSocket communication
-- Express.js for server framework
-- No AI-generated code - every line written and understood
-
-## Support
-
-For issues or questions:
-1. Check the troubleshooting section
-2. Verify all prerequisites are installed
-3. Check browser console for errors
-4. Ensure server is running on correct port
-
----
-
-**Happy Drawing! **
+Developed by Niranjana S

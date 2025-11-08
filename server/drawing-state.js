@@ -1,7 +1,4 @@
-/**
- * Drawing State Manager
- * Manages canvas history, undo/redo operations, and persistence
- */
+
 
 class DrawingState {
   constructor() {
@@ -9,7 +6,7 @@ class DrawingState {
     // Structure: { roomId: { history: [], undoneActions: [] } }
     this.rooms = new Map();
     
-    // Maximum history size to prevent memory issues
+    
     this.MAX_HISTORY_SIZE = 1000;
   }
 

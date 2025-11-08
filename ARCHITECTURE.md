@@ -2,7 +2,7 @@
 
 ## System Overview
 
-This is a real-time collaborative drawing application built with **Vanilla JavaScript** on the frontend and **Node.js + Socket.io** on the backend. The architecture follows a client-server model with WebSocket-based bidirectional communication.
+Collaborative Canvas is a real-time multi-user drawing platform built using Vanilla JavaScript, HTML5 Canvas, and Node.js with WebSockets. It allows users to draw together on a shared canvas, where every stroke is synchronized instantly across all connected clients. The server acts as a central hub to broadcast and manage drawing events, ensuring smooth collaboration between users.
 
 ## Technology Stack
 
@@ -19,163 +19,197 @@ This is a real-time collaborative drawing application built with **Vanilla JavaS
 - **In-memory storage** for drawing state
 
 ## Data Flow Diagram
+![System Architecture](./architecture-diagram.png)
 
-```mermaid
-flowchart LR
+The data flow diagram above represents the real-time communication and synchronization process in the Collaborative Canvas application. When a user begins drawing on the canvas, the Canvas.js module captures the drawing inputs such as cursor movement, brush color, and size. These inputs are passed to Main.js, which coordinates between the user interface and the communication layer. The WebSocket.js module then sends these drawing actions through a WebSocket connection to the server. On the backend, Server.js receives and validates these actions before storing them in DrawingState.js, which maintains the global drawing history. The RoomManager handles user sessions and manages connected clients. Once the server processes the data, it broadcasts the drawing updates back to all active users. Other clients, such as User B, receive these updates through their WebSocket.js, which passes them to Main.js and then to Canvas.js for rendering. This continuous bidirectional flow ensures that every user sees live updates on their screen, enabling smooth and synchronized real-time collaboration.
 
-%% ==== User A Side ====
-subgraph UA["User A (Browser)"]
-    UA1[Canvas.js] --> UA2[Main.js]
-    UA2 --> UA3[WebSocket.js]
-    UA1 -->|Draw Event| UA2
-    UA3 -->|Emit Action| WS[(WebSocket Connection)]
-end
 
-%% ==== Server Side ====
-subgraph S["Server (Node.js)"]
-    S1[Server.js] --> S2[DrawingState.js]
-    S2 --> S3[RoomManager]
-    S1 -->|Receive Action| S2
-    S2 -->|Store History| S3
-    S1 -->|Validate| S2
-    S3 -->|Manage State| S2
-    S1 -->|Broadcast to Clients| WS
-end
 
-%% ==== User B Side ====
-subgraph UB["User B (Browser)"]
-    UB1[WebSocket.js] --> UB2[Main.js]
-    UB2 --> UB3[Canvas.js]
-    UB3 -->|Render| CanvasDisplay[[Canvas Display]]
-end
 
-%% ==== Connections ====
-WS -. WebSocket Connection .-> S1
-S1 -->|Broadcast| UB1
-```
+## Real-time communication Flow
 
+1. User A (Client Side)
+
+When a user draws on the canvas, the Canvas.js captures the drawing input and sends it to Main.js.
+
+Main.js processes the input and passes it to WebSocket.js, which sends the drawing action to the server using WebSockets.
+
+2. Server (Backend)
+
+The Server.js module receives drawing data from users and validates it.
+
+Valid actions are stored in DrawingState.js, which keeps the drawing history.
+
+The RoomManager tracks active users and their sessions.
+
+The server then broadcasts the updated drawing data to all connected clients.
+
+3. User B (Other Clients)
+
+WebSocket.js receives the broadcast from the server and sends the update to Main.js.
+
+Main.js calls Canvas.js to render the new strokes on the local canvas so User B can see User A’s drawings in real time.
+
+4. Connection Layer
+
+The WebSocket connection ensures low-latency, bidirectional communication, allowing all users to see live updates instantly.
 
 ## Component Architecture
 
 ### Frontend Modules
 
-#### 1. Canvas.js (Drawing Engine)
-**Purpose**: Handles all canvas operations and drawing logic
+#### 1. Canvas.js - The Drawing Engine
 
-**Key Responsibilities**:
-- Canvas initialization and sizing
-- Mouse/touch event handling
-- Path tracking and rendering
-- Drawing tools (brush, eraser)
-- History replay for undo/redo
-- Canvas export
+This module is the heart of the application, responsible for everything that happens on the canvas — from detecting mouse or touch inputs to visually rendering strokes in real time.
 
-**Public API**:
-```javascript
-- init()                    // Initialize canvas
-- startDrawing(event)       // Begin drawing path
-- draw(event)               // Continue drawing path
-- stopDrawing()             // End drawing path
-- drawPath(path, color, size, isEraser)  // Render complete path
-- redrawFromHistory(history)  // Redraw from action history
-- clearCanvas()             // Clear entire canvas
-- downloadCanvas()          // Export as PNG
-- setTool/setColor/setBrushSize()  // Update drawing settings
-```
+**Core Functions:**
 
-**Performance Optimizations**:
-- Canvas scaled for retina displays
-- Efficient path rendering with `lineTo`
-- Minimal redraws (only necessary areas)
-- Smooth lines with `lineCap: 'round'`
+- Sets up and scales the canvas for different screen sizes.
+
+- Captures mouse/touch events and translates them into drawable paths.
+
+- Supports multiple tools such as brush and eraser.
+
+- Keeps a history of all strokes to enable undo and redo actions.
+
+- Allows exporting the canvas as an image file (PNG format).
+
+**API Overview**:
+
+- init()                        // Initialize and configure the canvas
+- startDrawing(event)           // Begin a drawing stroke
+- draw(event)                   // Continue drawing along the cursor
+- stopDrawing()                 // Complete the current stroke
+- drawPath(path, color, size, isEraser) // Render a given stroke
+- redrawFromHistory(history)    // Redraws the canvas from saved history
+- clearCanvas()                 // Wipes the entire canvas
+- downloadCanvas()              // Save the drawing as a PNG
+- setTool(), setColor(), setBrushSize() // Update tool and style settings
+
+
+**Performance Highlights**:
+
+Optimized to handle high-frequency drawing events efficiently.
+
+Uses lineTo and rounded line caps for smooth, natural-looking strokes.
+
+Only redraws changed areas instead of re-rendering the entire canvas.
+
+Scales properly on retina and high-DPI displays for crisp visuals.
 
 #### 2. WebSocket.js (Communication Layer)
-**Purpose**: Manages all WebSocket communication with server
 
-**Key Responsibilities**:
-- Socket.io connection management
-- Event emission to server
-- Event reception from server
-- Reconnection handling
-- Cursor position broadcasting
-- User state management
+This module manages all real-time interactions between clients and the server using WebSockets. It ensures every user sees live updates as others draw, erase, or perform actions.
 
-**Public API**:
-```javascript
-- init(serverUrl)           // Connect to server
-- sendDrawAction(action)    // Send drawing data
-- sendCursorPosition(x, y)  // Broadcast cursor
-- sendUndo/sendRedo()       // Request undo/redo
-- sendClearCanvas()         // Request clear
-- set callbacks for all events  // Register handlers
-```
+**Core Functions**:
+
+- Establishes and maintains the WebSocket connection with the backend.
+
+- Sends and receives drawing actions and cursor positions.
+
+- Handles undo, redo, and clear commands.
+
+- Reconnects automatically if the network connection drops.
+
+- Manages online users and updates their cursor positions on all connected clients.
+
+**PAPI Overview**:
+
+- init(serverUrl)               // Connect to the WebSocket server
+- sendDrawAction(action)        // Transmit a drawing stroke
+- sendCursorPosition(x, y)      // Broadcast live cursor position
+- sendUndo(), sendRedo()        // Trigger undo/redo actions
+- sendClearCanvas()             // Clear the shared canvas
+- on(event, callback)           // Register custom event listeners
+
 
 **Connection Management**:
-- Automatic reconnection with exponential backoff
-- Connection status callbacks
-- Graceful degradation on disconnect
+- Implements automatic reconnection with exponential backoff.
+
+- Provides real-time connection status updates.
+
+- Handles network interruptions gracefully without data loss.
 
 #### 3. Main.js (Application Controller)
-**Purpose**: Orchestrates all modules and handles UI interactions
 
-**Key Responsibilities**:
-- Module initialization
-- UI event binding
-- State management
-- User list updates
-- Remote cursor rendering
-- Notification system
+This module ties everything together — it initializes the app, connects UI controls with backend communication, and synchronizes user actions across all components.
 
-**State Management**:
-```javascript
+**Core Functions**:
+
+- Initializes the canvas and WebSocket modules.
+
+- Binds UI buttons (color picker, brush size, tools) with corresponding actions.
+
+- Tracks and manages drawing state, undo/redo availability, and active users.
+
+- Displays remote cursors and provides visual feedback for other users' actions.
+
+- Updates UI elements such as tool selection and user indicators.
+
+**State Management Example**:
+
 state = {
-  history: [],      // All drawing actions
-  canUndo: false,   // Undo availability
-  canRedo: false    // Redo availability
+  history: [],      // Stores all drawing actions
+  canUndo: false,   // Indicates if undo is available
+  canRedo: false    // Indicates if redo is available
 }
-```
+
+***Highlights***:
+
+Acts as the central controller, ensuring seamless coordination between UI, canvas, and server communication.
+
+Maintains a consistent experience across all connected users.
+
+Provides a clean separation of logic for easier maintenance and scalability.
+
 
 ### Backend Modules
-
 #### 1. Server.js (Main Server)
-**Purpose**: HTTP server and WebSocket event handler
 
-**Key Responsibilities**:
-- Express server setup
-- Socket.io initialization
-- Client connection handling
-- Event routing and validation
-- Broadcasting to clients
-- Error handling
+Acts as the central controller, handling both HTTP requests and real-time WebSocket communication. It manages user connections, routes drawing events, and synchronizes the shared canvas state across all clients.
 
-**WebSocket Events**:
-```javascript
-// Incoming from clients
-- DRAW_ACTION     // New drawing stroke
-- CURSOR_MOVE     // Cursor position update
-- UNDO            // Undo request
-- REDO            // Redo request
-- CLEAR_CANVAS    // Clear request
+***Core Responsibilities***:
 
-// Outgoing to clients
-- INIT_CANVAS     // Initial state on connect
-- DRAW_ACTION     // Broadcast drawing
-- USER_JOINED     // New user notification
-- USER_LEFT       // User disconnect notification
-- CURSOR_UPDATE   // Cursor position broadcast
-- UNDO_ACTION     // Undo performed
-- REDO_ACTION     // Redo performed
-- CANVAS_CLEARED  // Canvas cleared
-```
+- Initialize Express HTTP server
 
-#### 2. Drawing-State.js (State Manager)
-**Purpose**: Manages drawing history and undo/redo operations
+- Establish Socket.io for WebSocket communication
 
-**Data Structures**:
-```javascript
+- Handle client connections and disconnections
+
+- Validate and route all drawing-related events
+
+- Broadcast updates to connected users
+
+- Manage error detection and recovery
+
+**WebSocket Event Flow**:
+
+// Events received from clients
+- DRAW_ACTION      → User performed a new drawing stroke
+- CURSOR_MOVE      → Cursor position update
+- UNDO             → Undo request
+- REDO             → Redo request
+- CLEAR_CANVAS     → Clear canvas request
+
+// Events sent to clients
+- INIT_CANVAS      → Sends initial canvas state when user joins
+- DRAW_ACTION      → Broadcasts drawing stroke to all users
+- USER_JOINED      → Notifies others of a new participant
+- USER_LEFT        → Notifies when a user disconnects
+- CURSOR_UPDATE    → Broadcasts user cursor movement
+- UNDO_ACTION      → Reflects global undo
+- REDO_ACTION      → Reflects global redo
+- CANVAS_CLEARED   → Informs all users that the canvas was cleared
+
+#### 2. DrawingState.js (State Manager)
+
+Maintains the complete drawing history and handles undo/redo operations efficiently for each drawing room.
+
+**Data Structure**:
+
 rooms = Map {
   roomId: {
-    history: [         // Drawing actions
+    history: [          // Stores all drawing actions
       {
         tool: 'brush',
         path: [{x, y}, ...],
@@ -186,45 +220,32 @@ rooms = Map {
       },
       ...
     ],
-    undoneActions: []  // For redo functionality
+    undoneActions: []   // Stores undone actions for redo functionality
   }
 }
-```
+
 
 **Key Operations**:
-- `addAction()`: Append to history, clear redo stack
-- `undo()`: Pop from history, push to redo stack
-- `redo()`: Pop from redo stack, push to history
-- `clear()`: Empty both stacks
-- `getHistory()`: Return complete history
+
+- addAction() → Add a new drawing action to the history and clear redo stack
+
+- undo() → Move the most recent action to the redo stack
+
+- redo() → Move the most recent undone action back to the history
+
+- clear() → Reset both history and redo stacks
+
+- getHistory() → Retrieve the full drawing history for room synchronization
 
 **Memory Management**:
-- History limited to MAX_HISTORY_SIZE (1000 actions)
-- Oldest actions removed when limit reached
-- Empty rooms cleaned up automatically
 
-#### 3. Rooms.js (Room Manager)
-**Purpose**: Manages multiple drawing rooms and users
+- Limits drawing history to a maximum of 1000 actions per room
 
-**Data Structures**:
-```javascript
-rooms = Map {
-  roomId: [
-    {
-      userId: string,
-      color: string,
-      joinedAt: timestamp
-    },
-    ...
-  ]
-}
-```
+- Automatically removes the oldest entries beyond the limit
 
-**Key Operations**:
-- `addUser()`: Add user to room
-- `removeUser()`: Remove user, cleanup empty rooms
-- `getUsers()`: Get all users in room
-- `getUserCount()`: Count users in room
+- Performs cleanup of inactive or empty rooms to optimize memory
+
+
 
 ## WebSocket Protocol
 

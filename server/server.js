@@ -18,29 +18,26 @@ const io = socketIo(server, {
 
 const PORT = process.env.PORT || 3001;
 
-// Serve static files from client directory
+
 app.use(express.static(path.join(__dirname, '../client')));
 
-// Initialize managers
+
 const roomManager = new RoomManager();
 const drawingState = new DrawingState();
 
-/**
- * Socket.io connection handler
- * Manages user connections, drawing events, and synchronization
- */
+
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
-  // Generate random color for user
+  
   const userColor = '#' + Math.floor(Math.random()*16777215).toString(16);
   
-  // Add user to default room
+  
   const roomId = 'default';
   socket.join(roomId);
   roomManager.addUser(roomId, socket.id, userColor);
 
-  // Send current canvas state to newly connected user
+
   socket.emit('INIT_CANVAS', {
     history: drawingState.getHistory(roomId),
     users: roomManager.getUsers(roomId),
@@ -48,17 +45,14 @@ io.on('connection', (socket) => {
     userColor: userColor
   });
 
-  // Broadcast new user to others in room
+
   socket.to(roomId).emit('USER_JOINED', {
     userId: socket.id,
     color: userColor,
     users: roomManager.getUsers(roomId)
   });
 
-  /**
-   * Handle drawing action from client
-   * Validates, stores, and broadcasts to other users
-   */
+  
   socket.on('DRAW_ACTION', (data) => {
     try {
       if (!data || !data.path || !Array.isArray(data.path)) {
@@ -72,9 +66,9 @@ io.on('connection', (socket) => {
         timestamp: Date.now()
       };
 
-      // ✅ FIX: Separate handling for live (partial) vs finalized strokes
+      
       if (data.finalized) {
-        // Store completed stroke for undo/redo
+        
         drawingState.addAction(roomId, action);
         io.to(roomId).emit('DRAW_ACTION', action);
       } else {
@@ -87,9 +81,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  /**
-   * Handle cursor movement
-   */
+  
   socket.on('CURSOR_MOVE', (data) => {
     try {
       socket.to(roomId).emit('CURSOR_UPDATE', {
@@ -103,9 +95,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  /**
-   * Handle global undo operation
-   */
+  
   socket.on('UNDO', () => {
     try {
       const success = drawingState.undo(roomId);
@@ -119,9 +109,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  /**
-   * Handle global redo operation
-   */
+  
   socket.on('REDO', () => {
   try {
     const room = roomId;
@@ -131,17 +119,17 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Get the last undone action (without removing yet)
+    
     const actionToRedo = roomData.undoneActions[roomData.undoneActions.length - 1];
 
-    // Perform redo in the drawing state
+    
     const success = drawingState.redo(room);
 
     if (success) {
       
       io.to(room).emit('DRAW_ACTION', actionToRedo);
 
-      // Also update redo/undo states across clients
+      
       io.to(room).emit('REDO_ACTION', {
         history: drawingState.getHistory(room)
       });

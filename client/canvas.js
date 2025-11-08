@@ -1,7 +1,4 @@
-/**
- * Canvas Drawing Module
- * Handles all canvas operations, drawing logic, and rendering
- */
+
 
 const CanvasModule = (function() {
   // Private variables
@@ -92,7 +89,7 @@ const CanvasModule = (function() {
     if (!isDrawing) return null;
     isDrawing = false;
 
-    // ✅ FIX: Send full stroke once finished for undo/redo consistency
+    
     if (currentPath.length > 1) {
       WebSocketModule.sendDrawAction({
         tool,
@@ -100,7 +97,7 @@ const CanvasModule = (function() {
         color,
         size: brushSize,
         timestamp: Date.now(),
-        finalized: true // mark it as complete stroke
+        finalized: true 
       });
     }
 

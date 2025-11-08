@@ -1,7 +1,4 @@
-/**
- * Main Application Module
- * Orchestrates all modules and handles UI interactions
- */
+
 
 (function() {
   // Application state
@@ -18,39 +15,35 @@
     '#06b6d4', '#0891b2', '#1e293b', '#ffffff'
   ];
 
-  /**
-   * Initialize application
-   */
+  
   function init() {
     console.log('Initializing application...');
     
     // Initialize modules
     CanvasModule.init();
-    // Dynamic URL for production and local development
+    
     const socketUrl = window.location.hostname === 'localhost' 
     ? 'http://localhost:3001' 
     : window.location.origin;
 
     WebSocketModule.init(socketUrl);
     
-    // Setup UI event listeners
+    
     setupUIListeners();
     
-    // Setup WebSocket callbacks
+    
     setupWebSocketCallbacks();
     
-    // Initialize color picker
+    
     initializeColorPicker();
     
-    // Setup cursor tracking throttling
+    
     setupCursorTracking();
     
     console.log('Application initialized');
   }
 
-  /**
-   * Setup all UI event listeners
-   */
+  
   function setupUIListeners() {
     const canvas = CanvasModule.getCanvas();
     
@@ -92,7 +85,6 @@
 
   
   function setupWebSocketCallbacks() {
-    // Initial canvas state
     WebSocketModule.setOnInitCanvas((data) => {
       console.log('Initializing canvas with history:', data.history.length, 'actions');
       state.history = data.history;
@@ -254,9 +246,7 @@
     });
   }
 
-  /**
-   * Convert hex color to RGB string for comparison
-   */
+  
   function hexToRgb(hex) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     if (result) {
@@ -268,23 +258,17 @@
     return null;
   }
 
-  /**
-   * Update color hex display
-   */
+  
   function updateColorHex(color) {
     document.getElementById('color-hex').textContent = color.toUpperCase();
   }
 
-  /**
-   * Update size value display
-   */
+  
   function updateSizeValue(size) {
     document.getElementById('size-value').textContent = size + 'px';
   }
 
-  /**
-   * Update size indicator preview
-   */
+  
   function updateSizeIndicator() {
     const indicator = document.getElementById('size-indicator');
     const size = CanvasModule.getBrushSize();
@@ -295,18 +279,15 @@
     indicator.style.backgroundColor = color;
   }
 
-  /**
-   * Update undo/redo button states
-   */
+  
   function updateUndoRedoButtons() {
   const undoBtn = document.getElementById('undo-btn');
   const redoBtn = document.getElementById('redo-btn');
 
-  // Enable undo if there's at least one action
+  
   undoBtn.disabled = state.history.length === 0;
 
-  // Ask the server (through WebSocketModule) if redo is available
-  // or maintain your own flag (simpler fix below)
+  
   if (state.canRedo) {
     redoBtn.disabled = false;
   } else {
@@ -315,9 +296,7 @@
 }
 
 
-  /**
-   * Update user list display
-   */
+  
   function updateUsers(users) {
     const countElement = document.getElementById('user-count');
     const avatarsContainer = document.getElementById('user-avatars');
@@ -345,21 +324,19 @@
     });
   }
 
-  /**
-   * Update remote cursors display
-   */
+  
   function updateRemoteCursors() {
     const cursorsContainer = document.getElementById('remote-cursors');
     const cursors = WebSocketModule.getRemoteCursors();
     
-    // Clear existing cursors
+    
     cursorsContainer.innerHTML = '';
     
-    // Add cursor for each remote user
+    
     Object.keys(cursors).forEach(userId => {
       const cursor = cursors[userId];
       
-      // Skip stale cursors (older than 2 seconds)
+      
       if (Date.now() - cursor.timestamp > 2000) {
         return;
       }
@@ -382,9 +359,7 @@
     });
   }
 
-  /**
-   * Update connection status display
-   */
+  
   function updateConnectionStatus(connected) {
     const statusDot = document.querySelector('.status-dot');
     const statusText = document.getElementById('status-text');
@@ -400,12 +375,10 @@
     }
   }
 
-  /**
-   * Setup cursor tracking with throttling
-   */
+  
   function setupCursorTracking() {
     let lastUpdate = 0;
-    const throttleMs = 50; // Send cursor updates at most every 50ms
+    const throttleMs = 50; 
     
     const canvas = CanvasModule.getCanvas();
     
@@ -416,20 +389,18 @@
       }
       lastUpdate = now;
       
-      // Update remote cursors display periodically
+      
       updateRemoteCursors();
     });
   }
 
-  /**
-   * Show temporary notification
-   */
+  
   function showNotification(message) {
-    // Simple console log for now - can be enhanced with toast notifications
+    
     console.log('📢', message);
   }
 
-  // Initialize application when DOM is ready
+  
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
